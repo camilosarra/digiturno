@@ -9,7 +9,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # Envolver FastAPI con Socket.IO
-socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
+app = socketio.ASGIApp(sio, other_asgi_app=app)
 
 # =========================
 # Estado en memoria (cola)
