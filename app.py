@@ -8,7 +8,10 @@ sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 
 # FastAPI app
 fastapi_app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # =========================
 # Estado en memoria
