@@ -1,77 +1,122 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import socketio
-
-# Socket.IO
-sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
-
-# FastAPI app
-fastapi_app = FastAPI()
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# =========================
+
+# Configuración base
+
+# =========================
+
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+fastapi_app = FastAPI()
+
+BASE_DIR = os.path.dirname(os.path.abspath(**file**))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
+# Servir archivos estáticos (logo)
+
+fastapi_app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+
 # =========================
+
 # Estado en memoria
+
 # =========================
-turno_actual = 0
+
 cola_turnos = []
 contador_turnos = 0
+atendiendo = None
 
+# =========================
+
+# Rutas HTML
+
+# =========================
 
 @fastapi_app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
+return templates.TemplateResponse("index.html", {"request": request})
 
 @fastapi_app.get("/admin", response_class=HTMLResponse)
 async def admin(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "admin": True})
+return templates.TemplateResponse("index.html", {"request": request})
 
+# =========================
+
+# WebSocket Eventos
+
+# =========================
 
 @sio.event
 async def connect(sid, environ):
-    await enviar_estado(sid)
-
-
-@sio.event
-async def solicitar_turno(sid):
-    global contador_turnos
-    contador_turnos += 1
-    cola_turnos.append(contador_turnos)
-    await sio.emit("turno_asignado", {"turno": contador_turnos}, to=sid)
-    await enviar_estado()
-
+await enviar_estado(sid)
 
 @sio.event
-async def siguiente_turno(sid):
-    global turno_actual
-    if cola_turnos:
-        turno_actual = cola_turnos.pop(0)
-    await sio.emit("turno_llamado", {"turno": turno_actual})
-    await enviar_estado()
+async def solicitar_turno(sid, data):
+global contador_turnos
 
+```
+contador_turnos += 1
+turno = {
+    "id": contador_turnos,
+    "nombre": data["nombre"],
+    "tema": data["tema"],
+    "sid": sid
+}
+cola_turnos.append(turno)
+
+await sio.emit("turno_asignado", {"id": turno["id"]}, to=sid)
+await enviar_estado()
+```
 
 @sio.event
-async def marcar_atendido(sid):
-    global turno_actual
-    turno_actual = 0
-    await enviar_estado()
+async def llamar_turno(sid, turno_id):
+global atendiendo
 
+```
+turno_llamado = None
+for t in cola_turnos:
+    if t["id"] == turno_id:
+        turno_llamado = t
+        break
+
+if turno_llamado:
+    atendiendo = turno_llamado["nombre"]
+    cola_turnos.remove(turno_llamado)
+
+    # Avisar solo al usuario llamado
+    await sio.emit("turno_llamado", {"id": turno_llamado["id"]}, to=turno_llamado["sid"])
+
+await enviar_estado()
+```
+
+# =========================
+
+# Enviar estado global
+
+# =========================
 
 async def enviar_estado(sid=None):
-    data = {
-        "turno_actual": turno_actual,
-        "en_espera": len(cola_turnos),
-        "cola": cola_turnos
-    }
-    if sid:
-        await sio.emit("estado", data, to=sid)
-    else:
-        await sio.emit("estado", data)
+data = {
+"cola": [{"id": t["id"], "nombre": t["nombre"], "tema": t["tema"]} for t in cola_turnos],
+"atendiendo": atendiendo
+}
 
+```
+if sid:
+    await sio.emit("estado", data, to=sid)
+else:
+    await sio.emit("estado", data)
+```
 
-# 🔥 ESTA ES LA LÍNEA CORRECTA FINAL
+# =========================
+
+# App final ASGI
+
+# =========================
+
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
