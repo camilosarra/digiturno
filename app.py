@@ -5,15 +5,21 @@ from fastapi.staticfiles import StaticFiles
 import socketio
 import os
 
+=============================
 Inicializar Socket.IO y FastAPI
+=============================
 
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 fastapi_app = FastAPI()
 
-Configurar rutas de templates y archivos estáticos
+=============================
+Configurar rutas base
+=============================
 
 BASE_DIR = os.path.dirname(os.path.abspath(file))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
+Archivos estáticos (logo)
 
 fastapi_app.mount(
 "/static",
@@ -21,31 +27,41 @@ StaticFiles(directory=os.path.join(BASE_DIR, "static")),
 name="static"
 )
 
+=============================
 Estado en memoria
+=============================
 
 cola_turnos = []
 contador_turnos = 0
 atendiendo = None
 
+=============================
 Ruta principal (usuario)
+=============================
 
 @fastapi_app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+=============================
 Ruta administrador
+=============================
 
 @fastapi_app.get("/admin", response_class=HTMLResponse)
 async def admin(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-Evento conexión
+=============================
+Evento de conexión
+=============================
 
 @sio.event
 async def connect(sid, environ):
 await enviar_estado(sid)
 
+=============================
 Usuario solicita turno
+=============================
 
 @sio.event
 async def solicitar_turno(sid, data):
@@ -62,7 +78,9 @@ cola_turnos.append(turno)
 
 await sio.emit("turno_asignado", {"id": turno["id"]}, to=sid)
 await enviar_estado()
-Administrador llama a un usuario específico
+=============================
+Administrador llama turno específico
+=============================
 
 @sio.event
 async def llamar_turno(sid, turno_id):
@@ -86,7 +104,9 @@ if turno_llamado:
     )
 
 await enviar_estado()
-Enviar estado actualizado a todos
+=============================
+Enviar estado global
+=============================
 
 async def enviar_estado(sid=None):
 data = {
@@ -101,6 +121,8 @@ if sid:
     await sio.emit("estado", data, to=sid)
 else:
     await sio.emit("estado", data)
-Aplicación final ASGI
+=============================
+App final ASGI
+=============================
 
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
