@@ -57,7 +57,7 @@ async def admin(request: Request):
 
 @sio.event
 async def connect(sid, environ):
-await enviar_estado(sid)
+    await enviar_estado(sid)
 
 #=============================
 #Usuario solicita turno
@@ -65,7 +65,7 @@ await enviar_estado(sid)
 
 @sio.event
 async def solicitar_turno(sid, data):
-global contador_turnos
+    global contador_turnos
 
 contador_turnos += 1
 turno = {
