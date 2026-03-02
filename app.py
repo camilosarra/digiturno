@@ -122,7 +122,7 @@ if sid:
 else:
     await sio.emit("estado", data)
 #=============================
-App final ASGI
-=============================
+#App final ASGI
+#=============================
 
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
