@@ -14,12 +14,16 @@ import os
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 fastapi_app = FastAPI()
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(**file**))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # Servir archivos estáticos (logo)
 
-fastapi_app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+fastapi_app.mount(
+"/static",
+StaticFiles(directory=os.path.join(BASE_DIR, "static")),
+name="static"
+)
 
 # =========================
 
@@ -89,7 +93,11 @@ if turno_llamado:
     cola_turnos.remove(turno_llamado)
 
     # Avisar solo al usuario llamado
-    await sio.emit("turno_llamado", {"id": turno_llamado["id"]}, to=turno_llamado["sid"])
+    await sio.emit(
+        "turno_llamado",
+        {"id": turno_llamado["id"]},
+        to=turno_llamado["sid"]
+    )
 
 await enviar_estado()
 ```
@@ -102,7 +110,10 @@ await enviar_estado()
 
 async def enviar_estado(sid=None):
 data = {
-"cola": [{"id": t["id"], "nombre": t["nombre"], "tema": t["tema"]} for t in cola_turnos],
+"cola": [
+{"id": t["id"], "nombre": t["nombre"], "tema": t["tema"]}
+for t in cola_turnos
+],
 "atendiendo": atendiendo
 }
 
@@ -116,6 +127,11 @@ else:
 # =========================
 
 # App final ASGI
+
+# =========================
+
+app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
+
 
 # =========================
 
