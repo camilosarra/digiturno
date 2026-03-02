@@ -84,7 +84,7 @@ await enviar_estado()
 
 @sio.event
 async def llamar_turno(sid, turno_id):
-global atendiendo
+    global atendiendo
 
 turno_llamado = None
 for t in cola_turnos:
