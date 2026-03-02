@@ -14,7 +14,7 @@ import os
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 fastapi_app = FastAPI()
 
-BASE_DIR = os.path.dirname(os.path.abspath(**file**))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # Servir archivos estáticos (logo)
@@ -43,11 +43,11 @@ atendiendo = None
 
 @fastapi_app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @fastapi_app.get("/admin", response_class=HTMLResponse)
 async def admin(request: Request):
-return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # =========================
 
@@ -127,11 +127,6 @@ else:
 # =========================
 
 # App final ASGI
-
-# =========================
-
-app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
-
 
 # =========================
 
