@@ -5,17 +5,11 @@ from fastapi.staticfiles import StaticFiles
 import socketio
 import os
 
-=========================
-Configuración base
-=========================
-
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 fastapi_app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.abspath(file))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
-
-Servir archivos estáticos (logo)
 
 fastapi_app.mount(
 "/static",
@@ -23,17 +17,9 @@ StaticFiles(directory=os.path.join(BASE_DIR, "static")),
 name="static"
 )
 
-=========================
-Estado en memoria
-=========================
-
 cola_turnos = []
 contador_turnos = 0
 atendiendo = None
-
-=========================
-Rutas HTML
-=========================
 
 @fastapi_app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -43,10 +29,6 @@ return templates.TemplateResponse("index.html", {"request": request})
 async def admin(request: Request):
 return templates.TemplateResponse("index.html", {"request": request})
 
-=========================
-WebSocket Eventos
-=========================
-
 @sio.event
 async def connect(sid, environ):
 await enviar_estado(sid)
@@ -54,8 +36,8 @@ await enviar_estado(sid)
 @sio.event
 async def solicitar_turno(sid, data):
 global contador_turnos
-
 contador_turnos += 1
+
 turno = {
     "id": contador_turnos,
     "nombre": data["nombre"],
@@ -81,7 +63,6 @@ if turno_llamado:
     atendiendo = turno_llamado["nombre"]
     cola_turnos.remove(turno_llamado)
 
-    # Avisar solo al usuario llamado
     await sio.emit(
         "turno_llamado",
         {"id": turno_llamado["id"]},
@@ -89,9 +70,6 @@ if turno_llamado:
     )
 
 await enviar_estado()
-=========================
-Enviar estado global
-=========================
 
 async def enviar_estado(sid=None):
 data = {
@@ -106,8 +84,5 @@ if sid:
     await sio.emit("estado", data, to=sid)
 else:
     await sio.emit("estado", data)
-=========================
-App final ASGI
-=========================
 
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
