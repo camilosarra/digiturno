@@ -19,7 +19,7 @@ fastapi_app = FastAPI()
 BASE_DIR = os.path.dirname(os.path.abspath(file))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-Archivos estáticos (logo)
+#Archivos estáticos (logo)
 
 fastapi_app.mount(
 "/static",
