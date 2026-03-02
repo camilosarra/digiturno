@@ -109,7 +109,7 @@ await enviar_estado()
 #=============================
 
 async def enviar_estado(sid=None):
-data = {
+    data = {
 "cola": [
 {"id": t["id"], "nombre": t["nombre"], "tema": t["tema"]}
 for t in cola_turnos
